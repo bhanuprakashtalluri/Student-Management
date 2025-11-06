@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Student Management Portal</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header>
+    <h1>Student Management Portal</h1>
+    <nav id="main-nav">
+        <button data-section="students">Students</button>
+        <button data-section="courses">Courses</button>
+        <button data-section="enrollments">Enrollments</button>
+        <button data-section="grades">Grades</button>
+        <button data-section="attendance">Attendance</button>
+        <button data-section="addresses">Addresses</button>
+        <button data-section="contacts">Contacts</button>
+        <button id="themeToggle" title="Toggle Light/Dark Mode">🌗 Theme</button>
+    </nav>
+</header>
+<main>
+    <div id="status" class="status hidden"></div>
+
+    <section id="students" class="content-section hidden">
+        <h2>Students</h2>
+        <div class="actions">
+            <input type="text" id="studentSearchInput" placeholder="Search by name or status..." style="margin-right:8px;" />
+            <button id="studentSearchBtn" class="btn">Search</button>
+            <button class="refresh" data-endpoint="/api/students">Refresh</button>
+            <form id="studentUploadForm" class="flex gap-2" enctype="multipart/form-data" style="align-items:center;">
+                <input type="file" id="studentCsv" name="file" accept=".csv" />
+                <button type="submit" class="btn" title="Upload CSV">Upload CSV</button>
+            </form>
+            <button id="addStudentBtn" class="btn" type="button" style="margin-left:8px;">Add Student</button>
+        </div>
+        <form id="addStudentForm" class="hidden student-form" style="margin-top:12px; display:flex; flex-direction:column; gap:12px;">
+            <div><label>First Name<br/><input type="text" name="firstName" required /></label></div>
+            <div><label>Last Name<br/><input type="text" name="lastName" required /></label></div>
+            <div><label>Date of Birth<br/><input type="date" name="dateOfBirth" required /></label></div>
+            <div><label>Gender<br/>
+                <select name="gender" required>
+                    <option value="">Select</option>
+                    <option value="0">Male</option>
+                    <option value="1">Female</option>
+                    <option value="2">Other</option>
+                </select>
+            </label></div>
+            <div><label>Joining Date<br/><input type="date" name="joiningDate" required /></label></div>
+            <div><label>Status<br/>
+                <select name="studentStatus" required>
+                    <option value="">Select</option>
+                    <option value="0">Active</option>
+                    <option value="1">Inactive</option>
+                    <option value="2">Graduated</option>
+                </select>
+            </label></div>
+            <fieldset style="border:1px solid #ccc; padding:8px;">
+                <legend>Addresses (optional)</legend>
+                <div id="addressRows"></div>
+                <button type="button" id="addAddressRow" class="btn">+ Address</button>
+            </fieldset>
+            <fieldset style="border:1px solid #ccc; padding:8px;">
+                <legend>Contacts (optional)</legend>
+                <div id="contactRows"></div>
+                <button type="button" id="addContactRow" class="btn">+ Contact</button>
+            </fieldset>
+            <fieldset style="border:1px solid #ccc; padding:8px;">
+                <legend>Enrollments (optional)</legend>
+                <div id="enrollmentRows"></div>
+                <button type="button" id="addEnrollmentRow" class="btn">+ Enrollment</button>
+            </fieldset>
+            <div style="display:flex; gap:8px;">
+                <button type="submit" class="btn">Save</button>
+                <button type="button" id="cancelAddStudent" class="btn">Cancel</button>
+            </div>
+        </form>
+        <div class="data-table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Student Number</th><th>First Name</th><th>Last Name</th><th>DOB</th><th>Gender</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="courses" class="content-section hidden">
+        <h2>Courses</h2>
+        <div class="actions">
+            <input type="text" id="courseSearchInput" placeholder="Search by name or code..." style="margin-right:8px;" />
+            <button id="courseSearchBtn" class="btn">Search</button>
+            <button class="refresh" data-endpoint="/api/courses">Refresh</button>
+            <form class="upload-form" data-endpoint="/api/courses/upload-csv" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".csv" />
+                <button type="submit" class="btn">Upload CSV</button>
+            </form>
+        </div>
+        <form id="addCourseForm" class="hidden add-form" style="margin:10px 0;display:flex;gap:12px;flex-wrap:wrap;">
+            <input name="courseName" placeholder="Course Name" required maxlength="100" />
+            <input name="courseCode" placeholder="Code" required maxlength="10" />
+            <input name="courseCredits" type="number" step="0.5" min="0" max="50" placeholder="Credits" required />
+            <button type="submit" class="btn">Save</button>
+            <button type="button" data-cancel="course" class="btn cancel-add">Cancel</button>
+        </form>
+        <button type="button" id="showAddCourse" class="btn" style="margin-bottom:8px;">Add Course</button>
+        <div class="data-table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Name</th><th>Code</th><th>Credits</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="enrollments" class="content-section hidden">
+        <h2>Enrollments</h2>
+        <div class="actions">
+            <input type="text" id="enrollmentSearchInput" placeholder="Search by student, course, or semester..." style="margin-right:8px;" />
+            <button id="enrollmentSearchBtn" class="btn">Search</button>
+            <button class="refresh" data-endpoint="/api/enrollments">Refresh</button>
+            <form class="upload-form" data-endpoint="/api/enrollments/upload-csv" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".csv" />
+                <button type="submit" class="btn">Upload CSV</button>
+            </form>
+        </div>
+        <form id="addEnrollmentForm" class="hidden add-form" style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;">
+            <input name="studentNumber" list="studentNumberOptions" placeholder="Student Number" required />
+            <input name="courseNumber" list="courseNumberOptions" placeholder="Course Number" required />
+            <input name="enrollmentDate" type="date" required />
+            <input name="overallGrade" type="number" min="0" max="100" placeholder="Overall Grade" required />
+            <input name="semester" placeholder="Semester" required maxlength="20" />
+            <input name="instructorName" placeholder="Instructor" required maxlength="100" />
+            <button type="submit" class="btn">Save</button>
+            <button type="button" data-cancel="enrollment" class="btn cancel-add">Cancel</button>
+        </form>
+        <datalist id="studentNumberOptions"></datalist>
+        <datalist id="courseNumberOptions"></datalist>
+        <button type="button" id="showAddEnrollment" class="btn" style="margin-bottom:8px;">Add Enrollment</button>
+        <div class="data-table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Enrollment Number</th><th>Student</th><th>Course</th><th>Date</th><th>Semester</th><th>Overall Grade</th><th>Instructor</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="grades" class="content-section hidden">
+        <h2>Grades</h2>
+        <div class="actions">
+            <input type="text" id="gradeSearchInput" placeholder="Search by enrollment, type, or code..." style="margin-right:8px;" />
+            <button id="gradeSearchBtn" class="btn">Search</button>
+            <button class="refresh" data-endpoint="/api/grades">Refresh</button>
+            <form class="upload-form" data-endpoint="/api/grades/upload-csv" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".csv" />
+                <button type="submit" class="btn">Upload CSV</button>
+            </form>
+        </div>
+        <form id="addGradeForm" class="hidden add-form" style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;">
+            <input name="enrollmentNumber" list="enrollmentNumberOptions" placeholder="Enrollment Number" required />
+            <input name="assessmentDate" type="date" required />
+            <input name="assessmentType" placeholder="Type" maxlength="50" required />
+            <input name="obtainedScore" type="number" min="0" max="100" placeholder="Score" required />
+            <input name="maxScore" type="number" min="1" max="100" placeholder="Max" value="100" required />
+            <input name="gradeCode" list="gradeCodeOptions" type="number" min="0" max="10" placeholder="Grade Code" />
+            <button type="submit" class="btn">Save</button>
+            <button type="button" data-cancel="grade" class="btn cancel-add">Cancel</button>
+        </form>
+        <datalist id="gradeCodeOptions">
+          <option value="0"></option>
+          <option value="1"></option>
+          <option value="2"></option>
+          <option value="3"></option>
+          <option value="4"></option>
+          <option value="5"></option>
+          <option value="6"></option>
+          <option value="7"></option>
+          <option value="8"></option>
+          <option value="9"></option>
+          <option value="10"></option>
+        </datalist>
+        <button type="button" id="showAddGrade" class="btn" style="margin-bottom:8px;">Add Grade</button>
+        <div class="data-table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Enrollment Number</th><th>Student</th><th>Type</th><th>Date</th><th>Score</th><th>Max</th><th>Grade Code</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="attendance" class="content-section hidden">
+        <h2>Attendance</h2>
+        <div class="actions">
+            <input type="text" id="attendanceSearchInput" placeholder="Search by student, date, or status..." style="margin-right:8px;" />
+            <button id="attendanceSearchBtn" class="btn">Search</button>
+            <button class="refresh" data-endpoint="/api/attendance">Refresh</button>
+            <form class="upload-form" data-endpoint="/api/attendance/upload-csv" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".csv" />
+                <button type="submit" class="btn">Upload CSV</button>
+            </form>
+        </div>
+        <form id="addAttendanceForm" class="hidden add-form" style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;">
+            <input name="studentNumber" placeholder="Student Number" required />
+            <input name="enrollmentNumber" list="enrollmentNumberOptions" placeholder="Enrollment Number" required />
+            <input name="attendanceDate" type="date" required />
+            <select name="attendanceStatus" required>
+              <option value="">Status</option>
+              <option value="0">Present</option>
+              <option value="1">Absent</option>
+              <option value="2">Excused</option>
+            </select>
+            <input name="semester" placeholder="Semester" maxlength="20" />
+            <button type="submit" class="btn">Save</button>
+            <button type="button" data-cancel="attendance" class="btn cancel-add">Cancel</button>
+        </form>
+        <button type="button" id="showAddAttendance" class="btn" style="margin-bottom:8px;">Add Attendance</button>
+        <div class="data-table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Enrollment Number</th><th>Student</th><th>Date</th><th>Status</th><th>Semester</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="addresses" class="content-section hidden">
+        <h2>Addresses</h2>
+        <div class="actions">
+            <input type="text" id="addressSearchInput" placeholder="Search by student, city, or state..." style="margin-right:8px;" />
+            <button id="addressSearchBtn" class="btn">Search</button>
+            <button class="refresh" data-endpoint="/api/addresses">Refresh</button>
+            <form class="upload-form" data-endpoint="/api/addresses/upload-csv" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".csv" />
+                <button type="submit" class="btn">Upload CSV</button>
+            </form>
+        </div>
+        <form id="addAddressForm" class="hidden add-form" style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;">
+            <input name="studentNumber" placeholder="Student Number" required />
+            <input name="street" placeholder="Street" required maxlength="200" />
+            <input name="city" placeholder="City" required maxlength="100" />
+            <input name="state" placeholder="State" required maxlength="50" />
+            <input name="zipCode" placeholder="Zip" required maxlength="20" />
+            <button type="submit" class="btn">Save</button>
+            <button type="button" data-cancel="address" class="btn cancel-add">Cancel</button>
+        </form>
+        <button type="button" id="showAddAddress" class="btn" style="margin-bottom:8px;">Add Address</button>
+        <div class="data-table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Student Number</th><th>Student</th><th>Street</th><th>City</th><th>State</th><th>Zip</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section id="contacts" class="content-section hidden">
+        <h2>Contacts</h2>
+        <div class="actions">
+            <input type="text" id="contactSearchInput" placeholder="Search by student, email, or mobile..." style="margin-right:8px;" />
+            <button id="contactSearchBtn" class="btn">Search</button>
+            <button class="refresh" data-endpoint="/api/contacts">Refresh</button>
+            <form class="upload-form" data-endpoint="/api/contacts/upload-csv" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".csv" />
+                <button type="submit" class="btn">Upload CSV</button>
+            </form>
+        </div>
+        <form id="addContactForm" class="hidden add-form" style="margin:10px 0;display:flex;gap:8px;flex-wrap:wrap;">
+            <input name="studentNumber" placeholder="Student Number" required />
+            <input name="emailAddress" placeholder="Email" type="email" required maxlength="100" />
+            <input name="mobileNumber" placeholder="Mobile" required maxlength="15" />
+            <button type="submit" class="btn">Save</button>
+            <button type="button" data-cancel="contact" class="btn cancel-add">Cancel</button>
+        </form>
+        <button type="button" id="showAddContact" class="btn" style="margin-bottom:8px;">Add Contact</button>
+        <div class="data-table-wrapper">
+            <table class="data-table">
+                <thead><tr><th>Student Number</th><th>Student</th><th>Email</th><th>Mobile</th><th>Actions</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+<footer>
+    <small>&copy; <span id="year"></span> Student Management System</small>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>
